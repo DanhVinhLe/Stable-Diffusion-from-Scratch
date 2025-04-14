@@ -179,13 +179,13 @@ class Diffusion(nn.Module):
         super().__init__()
         self.time_embedding = TimeEmbedding(320)
         self.unet = UNET()
-        self.output_layer = UNET_OutputLayer(320, 4)
+        self.final = UNET_OutputLayer(320, 4)
     def forward(self, latent, context, time):
         # latent: (B, 4, H / 8, W / 8)
         # context: (B, seq_len, dim)
         # time : (B, 1280)
         time = self.time_embedding(time)
         output = self.unet(latent, context, time)
-        output = self.output_layer(output)
+        output = self.final(output)
         
         return output
