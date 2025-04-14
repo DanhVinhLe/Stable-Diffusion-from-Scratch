@@ -23,7 +23,7 @@ def get_time_embedding(timestep):
     x = torch.tensor([timestep], dtype = torch.float32)[:, None] / factor
     return torch.cat([torch.sin(x), torch.cos(x)], dim = -1)
 
-def generate(prompt: str, uncond_promt: str, input_images = None,
+def generate(prompt: str, uncond_prompt: str, input_images = None,
             strength = 0.8, do_cfg = True, cfg_scale = 7.5, 
             sampler_name = "ddpm", n_inference_step = 50, models = {}, seed = None,
             device = None, idle_device = None, tokenizer = None):
@@ -52,7 +52,7 @@ def generate(prompt: str, uncond_promt: str, input_images = None,
             # (B, seq_len) -> (B, seq_len, d_embed)
             cond_tokens = clip(cond_tokens)
             
-            uncond_tokens = torch.tensor(tokenizer.batch_encode_plus([uncond_promt], padding = "max length", max_length = 77).input_ids, dtype = torch.long, device = device)
+            uncond_tokens = torch.tensor(tokenizer.batch_encode_plus([uncond_prompt], padding = "max length", max_length = 77).input_ids, dtype = torch.long, device = device)
             uncond_tokens = clip(uncond_tokens)
             
             context = torch.cat([cond_tokens, uncond_tokens]) # (2* B, seq_len, d_embed)
