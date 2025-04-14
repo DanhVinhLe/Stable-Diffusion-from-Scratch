@@ -18,10 +18,11 @@ def rescale(x, old_range, new_range, clamp = False):
     return x
 
 def get_time_embedding(timestep):
-    factor = 2 * torch.arange(0, 160, dtype = torch.float32) / 320
-    factor = 10000 ** factor
-    x = torch.tensor([timestep], dtype = torch.float32)[:, None] / factor
-    return torch.cat([torch.sin(x), torch.cos(x)], dim = -1)
+    freqs = torch.pow(10000, -torch.arange(start=0, end=160, dtype=torch.float32) / 160) 
+    # Shape: (1, 160)
+    x = torch.tensor([timestep], dtype=torch.float32)[:, None] * freqs[None]
+    # Shape: (1, 160 * 2)
+    return torch.cat([torch.cos(x), torch.sin(x)], dim=-1)
 
 def generate(prompt: str, uncond_prompt: str, input_images = None,
             strength = 0.8, do_cfg = True, cfg_scale = 7.5, 
