@@ -46,19 +46,19 @@ def generate(prompt: str, uncond_prompt: str, input_images = None,
         
         if do_cfg:
             # Convert prompt to tokens
-            cond_tokens = tokenizer.batch_encode_plus([prompt], padding = "max length", max_length = 77).input_ids
+            cond_tokens = tokenizer.batch_encode_plus([prompt], padding = "max_length", max_length = 77).input_ids
             # (B, seq_len)
             cond_tokens = torch.tensor(cond_tokens, dtype = torch.long, device = device)
             # (B, seq_len) -> (B, seq_len, d_embed)
             cond_tokens = clip(cond_tokens)
             
-            uncond_tokens = torch.tensor(tokenizer.batch_encode_plus([uncond_prompt], padding = "max length", max_length = 77).input_ids, dtype = torch.long, device = device)
+            uncond_tokens = torch.tensor(tokenizer.batch_encode_plus([uncond_prompt], padding = "max_length", max_length = 77).input_ids, dtype = torch.long, device = device)
             uncond_tokens = clip(uncond_tokens)
             
             context = torch.cat([cond_tokens, uncond_tokens]) # (2* B, seq_len, d_embed)
         
         else:
-            tokens = tokenizer.batch_encode_plus([prompt], padding = "max length", max_length = 77).input_ids
+            tokens = tokenizer.batch_encode_plus([prompt], padding = "max_length", max_length = 77).input_ids
             tokens = torch.tensor(tokens, dtype = torch.long, device = device)
             context = clip(tokens)
             
