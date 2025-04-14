@@ -4,7 +4,7 @@ import torch.nn.functional as F
 
 from decoder import VAE_AttentionBlock, VAE_ResidualBlock
 
-class VAE_Encoder(nn.Module):
+class VAE_Encoder(nn.Sequential):
     def __init__(self):
         super().__init__(
             nn.Conv2d(3, 128, kernel_size=3, padding=1), # (B, 3, H, W) -> (B, 128, H, W)
