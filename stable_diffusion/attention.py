@@ -21,7 +21,7 @@ class SelfAttention(nn.Module):
         weight = q @ k.transpose(-1, -2)
         
         if causal_mask:
-            causal_mask = torch.triu(torch.ones((seq_len, seq_len)), diagonal = 1).bool()
+            causal_mask = torch.triu(torch.ones((seq_len, seq_len)), diagonal = 1).bool().to(x.device)
             weight = weight.masked_fill(causal_mask, float('-inf'))
         
         weight /= (self.d_head ** 0.5)
