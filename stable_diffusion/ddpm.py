@@ -3,7 +3,7 @@ import numpy as np
 
 class DDPMSampler:
     def __init__(self, generator: torch.Generator, num_training_steps: int = 1000, beta_start: float = 0.00085, beta_end: float = 0.0120):
-        self.betas = torch.linspace(beta_start ** 0.5, beta_end ** 0.5, num_training_steps, dtype=torch.float32)
+        self.betas = torch.linspace(beta_start ** 0.5, beta_end ** 0.5, num_training_steps, dtype=torch.float32) ** 2
         self.alphas = 1 - self.betas
         self.alphas_cumprod = torch.cumprod(self.alphas, dim=0)
         self.generator = generator
@@ -44,7 +44,7 @@ class DDPMSampler:
         t = timestep
         prev_t = self.get_previous_timestep(t)
         alpha_cum_t = self.alphas_cumprod[t]
-        alpha_cum_prev_t = self.alphas_cumprod[prev_t]
+        alpha_cum_prev_t = self.alphas_cumprod[prev_t] if prev_t >= 0 else torch.tensor(1.0, device=alpha_cum_t.device)
         beta_cum_t = 1 - alpha_cum_t
         beta_cum_prev_t = 1 - alpha_cum_prev_t
         current_alpha_t = alpha_cum_t / alpha_cum_prev_t
@@ -52,7 +52,7 @@ class DDPMSampler:
         
         pred_original = (latents - beta_cum_t ** (0.5) * model_output) / alpha_cum_t ** (0.5)
         
-        pred_original_coeff = alpha_cum_prev_t ** (0.5) * current_beta_t / beta_cum_t
+        pred_original_coeff = (alpha_cum_prev_t ** (0.5) * current_beta_t) / beta_cum_t
         pred_current_coeff = alpha_cum_t ** (0.5) * beta_cum_prev_t / beta_cum_t
         
         pred_prev_sample = pred_original_coeff * pred_original + pred_current_coeff * latents
@@ -61,7 +61,6 @@ class DDPMSampler:
         if t > 0: 
             device = model_output.device
             noise = torch.randn(model_output.shape, device= device, generator= self.generator, dtype = model_output.dtype)
-            variance = self.get_variance(t)
             variance = self.get_variance(t) ** (0.5) * noise
         
         pred_prev_sample = pred_prev_sample + variance

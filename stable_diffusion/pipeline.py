@@ -72,7 +72,7 @@ def generate(prompt: str, uncond_prompt: str, input_images = None,
         if input_images:
             encoder = models["encoder"]
             encoder.to(device)
-            input_images_tensor = input_images_tensor.resize((WIDTH, HEIGHT))
+            input_images_tensor = input_images.resize((WIDTH, HEIGHT))
             input_images_tensor = np.array(input_images_tensor)
             input_images_tensor = torch.tensor(input_images_tensor, dtype = torch.float32, device = device) # (H, W, C)
             input_images_tensor = rescale(input_images_tensor, (0, 255), (-1, 1))
