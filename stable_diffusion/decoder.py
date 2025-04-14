@@ -29,9 +29,9 @@ class VAE_ResidualBlock(nn.Module):
         self.groupnorm_2 = nn.GroupNorm(32, out_channels)
         self.conv_2 = nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1)
         if in_channels != out_channels:
-            self.residual_layers = nn.Conv2d(in_channels, out_channels, kernel_size=1)
+            self.residual_layer = nn.Conv2d(in_channels, out_channels, kernel_size=1)
         else:
-            self.residual_layers = nn.Identity()
+            self.residual_layer = nn.Identity()
     def forward(self, x):
         # x: (B, in_channels, H, W)
         residual = x 
@@ -41,7 +41,7 @@ class VAE_ResidualBlock(nn.Module):
         x = self.groupnorm_2(x)
         x = F.silu(x)
         x = self.conv_2(x)
-        x += self.residual_layers(residual)
+        x += self.residual_layer(residual)
         return x
     
 class VAE_Decoder(nn.Sequential):
