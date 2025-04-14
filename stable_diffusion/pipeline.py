@@ -26,15 +26,11 @@ def get_time_embedding(timestep):
 def generate(prompt: str, uncond_prompt: str, input_images = None,
             strength = 0.8, do_cfg = True, cfg_scale = 7.5, 
             sampler_name = "ddpm", n_inference_step = 50, models = {}, seed = None,
-            device = None, idle_device = None, tokenizer = None):
+            device = None, idle_device = "cpu", tokenizer = None):
     with torch.no_grad():
         if not (0 < strength and strength < 1):
             raise ValueError("Strength must be between 0 and 1")
         # idle_device to avoid OOM error of GPU
-        if idle_device:
-            to_idle: lambda x: x.to(idle_device)
-        else:
-            to_idle: lambda x: x
         generator = torch.Generator(device=device)
         if seed is None:
             generator.seed()
@@ -62,7 +58,7 @@ def generate(prompt: str, uncond_prompt: str, input_images = None,
             tokens = torch.tensor(tokens, dtype = torch.long, device = device)
             context = clip(tokens)
             
-        to_idle(clip)
+        clip.to(idle_device)
         
         if sampler_name == "ddpm":
             sampler = DDPMSampler(generator)
@@ -85,7 +81,8 @@ def generate(prompt: str, uncond_prompt: str, input_images = None,
             
             latents = sampler.add_noise(latents, sampler.timesteps[0])
             
-            to_idle(encoder)
+            # to_idle(encoder)
+            encoder.to(idle_device)
         else:
             latents = torch.randn(latent_shape, generator= generator, device= device)
             
@@ -105,11 +102,11 @@ def generate(prompt: str, uncond_prompt: str, input_images = None,
             
             latents = sampler.step(timestep, latents, model_output)
         
-        to_idle(diffusion)
+        diffusion.to(idle_device)
         decoder = models["decoder"]
         decoder.to(device)
         images = decoder(latents)
-        to_idle(decoder)
+        diffusion.to(idle_device)
         images = rescale(images, (-1, 1), (0, 255), clamp= True)
         # (B, C, H, W) -> (B, H, W, C)
         images = images.permute(0, 2, 3, 1)
