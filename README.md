@@ -9,5 +9,7 @@ This repository contains a from-scratch implementation of the Stable Diffusion m
 ```bash
 ├── stable_diffusion/               # Model architectures
 ├── infer_sd_from_scratch.ipynb     # Kaggle notebook for images generation
+├── sd_diffusers.ipynb              # Images generation with Diffusers 
 ├── README.md                       # You're here!
 ```
+
