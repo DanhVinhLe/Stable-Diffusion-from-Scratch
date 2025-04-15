@@ -65,7 +65,7 @@ class UNet_AttentionBlock(nn.Module):
         residual_long = feature
         feature = self.groupnorm(feature)
         feature = self.conv_input(feature)
-        feature = feature.view(B, C, H * W).permute(0, 2, 1) # (B, H * W, C)
+        feature = feature.view(B, C, H * W).transpose(-1, -2) # (B, H * W, C)
         residual_short = feature # (B, H * W, C)
         feature = self.layernorm_1(feature)
         feature = self.attention_1(feature) 
@@ -81,7 +81,7 @@ class UNet_AttentionBlock(nn.Module):
         
         feature = self.linear_geglu_2(feature)
         feature += residual_short
-        feature = feature.permute(0, 2, 1).view(B, C, H, W) # (B, C, H * W) -> (B, C, H, W)
+        feature = feature.transpose(-1, -2).view(B, C, H, W) # (B, C, H * W) -> (B, C, H, W)
         feature = self.conv_output(feature)
         feature += residual_long
         return feature 
