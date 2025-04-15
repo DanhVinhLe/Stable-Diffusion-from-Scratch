@@ -48,7 +48,7 @@ class UNet_AttentionBlock(nn.Module):
         super().__init__()
         channels = n_embd * n_head
         
-        self.groupnorm = nn.GroupNorm(32, channels)
+        self.groupnorm = nn.GroupNorm(32, channels, eps=1e-6)
         self.conv_input = nn.Conv2d(channels, channels, kernel_size=1)
         self.layernorm_1 = nn.LayerNorm(channels)
         self.attention_1 = SelfAttention(n_head, channels, in_proj_bias= False)
@@ -77,7 +77,7 @@ class UNet_AttentionBlock(nn.Module):
         residual_short = feature
         feature = self.layernorm_3(feature) # (B, H * W, C)
         feature, gate = self.linear_geglu_1(feature).chunk(2, dim = -1) # (B, H * W, C * 4)
-        feature = feature + F.gelu(gate)
+        feature = feature * F.gelu(gate)
         
         feature = self.linear_geglu_2(feature)
         feature += residual_short
