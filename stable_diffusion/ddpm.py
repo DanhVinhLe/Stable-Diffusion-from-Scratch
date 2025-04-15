@@ -7,9 +7,9 @@ class DDPMSampler:
         self.alphas = 1 - self.betas
         self.alphas_cumprod = torch.cumprod(self.alphas, dim=0)
         self.generator = generator
+        self.one = torch.tensor(1.0)
         self.num_training_steps = num_training_steps
-        self.timesteps = torch.arange(num_training_steps -1, -1, -1)
-        self.alphas_cumprod_prev = torch.cat([torch.tensor([1.0]), self.alphas_cumprod[:-1]])
+        self.timesteps = torch.from_numpy(np.arange(0, num_training_steps)[::-1].copy())
         
     def set_inference_timesteps(self, num_inference_steps: int):
         self.num_inference_steps = num_inference_steps
@@ -24,9 +24,10 @@ class DDPMSampler:
     def get_variance(self, timestep: int):
         prev_t = self.get_previous_timestep(timestep)
         alpha_cum_t = self.alphas_cumprod[timestep]
-        alpha_cum_prev_t = self.alphas_cumprod[prev_t] if prev_t >= 0 else torch.tensor(1.0, device=alpha_cum_t.device)
+        alpha_cum_prev_t = self.alphas_cumprod[prev_t] if prev_t >= 0 else self.one
         current_beta_t = 1 - alpha_cum_t / alpha_cum_prev_t
         variance = current_beta_t * (1 - alpha_cum_prev_t) / (1 - alpha_cum_t)
+        variance = torch.clamp(variance, min = 1e-20)
         return variance
     
     def set_strength(self, strength: float = 1.0):
@@ -44,7 +45,7 @@ class DDPMSampler:
         t = timestep
         prev_t = self.get_previous_timestep(t)
         alpha_cum_t = self.alphas_cumprod[t]
-        alpha_cum_prev_t = self.alphas_cumprod[prev_t] if prev_t >= 0 else torch.tensor(1.0, device=alpha_cum_t.device)
+        alpha_cum_prev_t = self.alphas_cumprod[prev_t] if prev_t >= 0 else self.one
         beta_cum_t = 1 - alpha_cum_t
         beta_cum_prev_t = 1 - alpha_cum_prev_t
         current_alpha_t = alpha_cum_t / alpha_cum_prev_t
@@ -72,6 +73,8 @@ class DDPMSampler:
         noise = torch.randn(original_samples.shape, generator= self.generator, device= original_samples.device, dtype = original_samples.dtype)
         sqrt_alphas_cum = alphas_cum[timesteps] ** (0.5)
         sqrt_one_minus_alphas_cum = (1 - alphas_cum[timesteps]) ** (0.5)
+        sqrt_alphas_cum = sqrt_alphas_cum.flatten()
+        sqrt_one_minus_alphas_cum = sqrt_one_minus_alphas_cum.flatten()
         while(len(sqrt_alphas_cum.shape) < len(noise.shape)):
             sqrt_alphas_cum = sqrt_alphas_cum.unsqueeze(-1)
         while(len(sqrt_one_minus_alphas_cum.shape) < len(noise.shape)):
