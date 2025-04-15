@@ -15,9 +15,9 @@ class VAE_AttentionBlock(nn.Module):
         B, C, H, W = x.shape
         residual = x
         x = self.groupnorm(x)
-        x = x.view(B, C, H*W).permute(0, 2, 1) # (B, H*W, C)
+        x = x.view(B, C, H*W).transpose(-1, -2) # (B, H*W, C)
         x = self.attention(x)
-        x = x.permute(0, 2, 1).view(B, C, H, W) # (B, C, H*W) -> (B, C, H, W)
+        x = x.transpose(-1, -2).view(B, C, H, W) # (B, C, H*W) -> (B, C, H, W)
         x += residual
         return x
 

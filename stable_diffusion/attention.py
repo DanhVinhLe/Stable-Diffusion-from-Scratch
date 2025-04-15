@@ -21,14 +21,14 @@ class SelfAttention(nn.Module):
         weight = q @ k.transpose(-1, -2)
         
         if causal_mask:
-            causal_mask = torch.triu(torch.ones((seq_len, seq_len)), diagonal = 1).bool().to(x.device)
-            weight = weight.masked_fill(causal_mask, float('-inf'))
+            mask = torch.ones_like(weight, dtype = torch.bool).triu(1)
+            weight.masked_fill_(mask, float("-inf"))
         
         weight /= (self.d_head ** 0.5)
         weight = F.softmax(weight, dim = -1)
         output = weight @ v
         output = output.transpose(1, 2)
-        output = output.reshape(batch_size, seq_len, d_embed)
+        output = output.reshape((batch_size, seq_len, d_embed))
         output = self.out_proj(output)
         return output
         
